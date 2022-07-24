@@ -41,6 +41,7 @@ def main():
     config = configparser.ConfigParser()
     config.read('dwh.cfg')
 
+    db_host = fernet.decrypt(config['CLUSTER']["HOST"].encode()).decode()
     db_name = fernet.decrypt(config['CLUSTER']["DB_NAME"].encode()).decode()
     db_username = fernet.decrypt(
         config['CLUSTER']["DB_USER"].encode()).decode()
@@ -49,7 +50,7 @@ def main():
 
     try:
         conn = psycopg2.connect("host={} dbname={} user={} password={} port={}".format(
-            config['CLUSTER']["HOST"],
+            db_host,
             db_name,
             db_username,
             db_password,
@@ -62,8 +63,9 @@ def main():
     print("Connected!")
 
     load_staging_tables(cur, conn)
+    print("-"*60)
     # insert_tables(cur, conn)
-
+    print("-"*60)
     conn.close()
 
 
