@@ -10,10 +10,11 @@ from cryptography.fernet import Fernet
 # key = Fernet.generate_key()
 # print(key.decode("utf-8"))
 #########################################
-# Step2: Store the `key` print above somewhere, you need to use it again. (maybe SSM or Secret Manager on AWS)
-# Step3: Set the secretSEED environment with the same value from the `key`
-# Step4: We will use that key to descrypt values (such as DB Password, DB Username,...)
-# Step5: You may also store the `key` in the .env file, but dont commit that file to public (it is top secret.)
+# Step2: Store the `key` print above somewhere, you need to use it again. (maybe SSM or Secret Manager on AWS, here i will use .env file)
+# Step3: Set the secretSEED environment with the value from the `key` (or inside .env file, exp: secretSEED=ABCDEawegwaeg_==)
+# Step4: You can use this python script to encrypt values and store it into the dwh.cfg (replace the msg in line 36 to the value you want to encrypt)
+# Step5: Use this script to encrypt all the sensitive data (such as DB Password, DB Username, DB HOST, DB Name)
+# Step6: You may also store the `key` in the .env file, but dont commit that file to public (it is top secret.)
 
 #################
 
@@ -32,7 +33,7 @@ if __name__ == "__main__":
 
     fernet = Fernet(seed)
 
-    msg = "Message That i want to encrypt, a Password maybe."
+    msg = "Message That i want to encrypt, a Password maybe." ## CHANGE HERE, put in the sensitive data you want to encrypt
     encrypted = fernet.encrypt(msg.encode())
     print("original:", msg)
     print("encrypted (Bytes):", encrypted)
