@@ -13,6 +13,12 @@ l_insert_tables = ["songplay_table_insert", "user_table_insert",
 
 
 def load_staging_tables(cur, conn):
+    """Loading Data from Public S3 public into Redshift staging tables, ready to load into the final tables, note that we simply COPY data from S3 to RS tables, no transform anything here.
+
+    Args:
+        cur (cursor): Redshift DB Connection Cursor
+        conn (Connection): RedshiftDB Connection
+    """
     for i, query in enumerate(copy_table_queries):
         start = time.time()
         print("Starting --- to copy data into {}".format(
@@ -26,6 +32,12 @@ def load_staging_tables(cur, conn):
 
 
 def insert_tables(cur, conn):
+    """Loading Data from stating table (staging_events, staging_songs) into the final tables, using Insert SQL
+
+    Args:
+        cur (cursor): Redshift DB Connection Cursor
+        conn (Connection): RedshiftDB Connection
+    """
     for i, query in enumerate(insert_table_queries):
         start = time.time()
         print("Starting --- to copy data into {}".format(l_insert_tables[i]))

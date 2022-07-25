@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS staging_songs (
 
 songplay_table_create = ("""
 CREATE TABLE IF NOT EXISTS songplays (
+    songplay_id BIGINT IDENTITY(0,1) PRIMARY KEY,
     start_time  TIMESTAMP NOT NULL SORTKEY,
     user_id     INT NOT NULL DISTKEY, 
     level       TEXT NOT NULL, 
@@ -73,7 +74,7 @@ CREATE TABLE IF NOT EXISTS songplays (
 
 user_table_create = ("""
 CREATE TABLE IF NOT EXISTS users (
-    user_id     INT NOT NULL SORTKEY DISTKEY, 
+    user_id     INT NOT NULL PRIMARY KEY SORTKEY DISTKEY, 
     first_name  TEXT NOT NULL, 
     last_name   TEXT NOT NULL, 
     gender      TEXT NOT NULL, 
@@ -83,7 +84,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 song_table_create = ("""
 CREATE TABLE IF NOT EXISTS songs (
-    song_id     TEXT   NOT NULL SORTKEY, 
+    song_id     TEXT   NOT NULL PRIMARY KEY SORTKEY, 
     title       TEXT NOT NULL, 
     artist_id   TEXT NOT NULL, 
     year        INT NOT NULL, 
@@ -93,7 +94,7 @@ CREATE TABLE IF NOT EXISTS songs (
 
 artist_table_create = ("""
 CREATE TABLE IF NOT EXISTS artists (
-    artist_id   TEXT  NOT NULL SORTKEY, 
+    artist_id   TEXT  NOT NULL PRIMARY KEY SORTKEY, 
     name        TEXT NOT NULL, 
     location    TEXT, 
     latitude    DOUBLE PRECISION, 
@@ -103,7 +104,7 @@ CREATE TABLE IF NOT EXISTS artists (
 
 time_table_create = ("""
 CREATE TABLE IF NOT EXISTS time (
-    start_time  TIMESTAMP  NOT NULL SORTKEY, 
+    start_time  TIMESTAMP  NOT NULL PRIMARY KEY SORTKEY, 
     hour        SMALLINT NOT NULL,  
     day         SMALLINT NOT NULL, 
     week        SMALLINT NOT NULL, 
@@ -144,27 +145,40 @@ FROM
 	staging_events se
 LEFT JOIN staging_songs ss 
 ON
-    se.artist = ss.artist_name
+        se.artist = ss.artist_name
 	and se.song = ss.title
+    and se.length = ss.duration
 WHERE se.page = 'NextSong'
 """)
 
 user_table_insert = ("""
 INSERT INTO users (user_id, first_name, last_name, gender, level) 
-select	
+with add_rank_to_users AS(
+    select
+        se.userid ,
+        se.firstname ,
+        se.lastname ,
+        se.gender ,
+        se."level",
+        ROW_NUMBER() OVER(PARTITION BY userid ORDER BY ts DESC) AS rank
+    from
+        staging_events se   
+    where se.userid is not null 
+)
+select distinct
 	se.userid ,
 	se.firstname ,
 	se.lastname ,
 	se.gender ,
 	se."level" 
 from
-	staging_events se
-where se.userid is not null
+	add_rank_to_users se
+where rank = 1;
 """)
 
 song_table_insert = ("""
 INSERT INTO songs (song_id, title, artist_id, year, duration) 
-select	
+select distinct
 	ss.song_id ,
 	ss.title ,
 	ss.artist_id ,
@@ -177,7 +191,7 @@ where ss.song_id is not null
 
 artist_table_insert = ("""
 INSERT INTO artists (artist_id, name, location, latitude, longitude) 
-select	
+select distinct
 	ss.artist_id ,
 	ss.artist_name ,
 	ss.artist_location ,
@@ -191,7 +205,7 @@ where ss.artist_id is not null
 
 time_table_insert = ("""
 INSERT INTO time (start_time, hour, day, week, month, year, weekday) 
-select	
+select distinct
 	timestamp 'epoch' + se.ts/1000 * interval '1 second' as start_time ,
 	extract(hour from start_time) as hour,
 	extract(day from start_time) as day,

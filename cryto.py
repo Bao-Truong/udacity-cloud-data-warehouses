@@ -20,6 +20,11 @@ from cryptography.fernet import Fernet
 
 
 def get_seed():
+    """Read the secret Key from environment for Fernet Algo
+
+    Returns:
+        binary: the key used to enscrypt/decrypt the sensitive data
+    """
     load_dotenv()
     seed = os.getenv("secretSEED")
     seed = seed.encode()  # from string to bytes
@@ -27,13 +32,12 @@ def get_seed():
 
 
 if __name__ == "__main__":
-    load_dotenv()
-    seed = os.getenv("secretSEED")
-    seed = seed.encode()  # from string to bytes
+    seed = get_seed()
 
     fernet = Fernet(seed)
 
-    msg = "Message That i want to encrypt, a Password maybe." ## CHANGE HERE, put in the sensitive data you want to encrypt
+    # CHANGE HERE, put in the sensitive data you want to encrypt
+    msg = "Message That i want to encrypt, a Password maybe."
     encrypted = fernet.encrypt(msg.encode())
     print("original:", msg)
     print("encrypted (Bytes):", encrypted)

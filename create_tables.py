@@ -8,6 +8,12 @@ fernet = Fernet(get_seed())  # Used to decrypt the DB info
 
 
 def drop_tables(cur, conn):
+    """Drop all the tables inside Redshift Database
+
+    Args:
+        cur (cursor): Redshift DB Connection Cursor
+        conn (Connection): RedshiftDB Connection
+    """
     print("Staring --- to destroy all tables.")
     for query in drop_table_queries:
         cur.execute(query)
@@ -16,6 +22,12 @@ def drop_tables(cur, conn):
 
 
 def create_tables(cur, conn):
+    """Create all requried tables in the Redshift DB, Fact/Dim Tables and 2 Staging tables
+
+    Args:
+        cur (cursor): Redshift DB Connection Cursor
+        conn (Connection): RedshiftDB Connection
+    """
     print("Starting --- to create all tables.")
     for query in create_table_queries:
         cur.execute(query)
@@ -24,6 +36,9 @@ def create_tables(cur, conn):
 
 
 def main():
+    """
+    Entry point of the python script
+    """
     config = configparser.ConfigParser()
     config.read('dwh.cfg')
 
