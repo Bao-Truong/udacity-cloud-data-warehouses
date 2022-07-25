@@ -60,57 +60,57 @@ CREATE TABLE IF NOT EXISTS staging_songs (
 
 songplay_table_create = ("""
 CREATE TABLE IF NOT EXISTS songplays (
-    start_time TIMESTAMP NOT NULL,
-    user_id INT NOT NULL, 
-    level TEXT, 
-    song_id TEXT, 
-    artist_id TEXT, 
-    session_id INT, 
-    location TEXT, 
-    user_agent TEXT
+    start_time  TIMESTAMP NOT NULL SORTKEY,
+    user_id     INT NOT NULL DISTKEY, 
+    level       TEXT NOT NULL, 
+    song_id     TEXT , 
+    artist_id   TEXT , 
+    session_id  INT NOT NULL, 
+    location    TEXT NOT NULL, 
+    user_agent  TEXT NOT NULL
 );
 """)
 
 user_table_create = ("""
 CREATE TABLE IF NOT EXISTS users (
-    user_id INT  , 
-    first_name TEXT, 
-    last_name TEXT, 
-    gender TEXT, 
-    level TEXT
+    user_id     INT NOT NULL SORTKEY DISTKEY, 
+    first_name  TEXT NOT NULL, 
+    last_name   TEXT NOT NULL, 
+    gender      TEXT NOT NULL, 
+    level       TEXT NOT NULL
 );
 """)
 
 song_table_create = ("""
 CREATE TABLE IF NOT EXISTS songs (
-    song_id TEXT  , 
-    title TEXT NOT NULL, 
-    artist_id TEXT NOT NULL, 
-    year INT, 
-    duration FLOAT(8) NOT NULL
-);
+    song_id     TEXT   NOT NULL SORTKEY, 
+    title       TEXT NOT NULL, 
+    artist_id   TEXT NOT NULL, 
+    year        INT NOT NULL, 
+    duration    FLOAT(8) NOT NULL
+)diststyle all;
 """)
 
 artist_table_create = ("""
 CREATE TABLE IF NOT EXISTS artists (
-    artist_id TEXT , 
-    name TEXT NOT NULL, 
-    location TEXT, 
-    latitude DOUBLE PRECISION, 
-    longitude DOUBLE PRECISION
-);
+    artist_id   TEXT  NOT NULL SORTKEY, 
+    name        TEXT NOT NULL, 
+    location    TEXT, 
+    latitude    DOUBLE PRECISION, 
+    longitude   DOUBLE PRECISION
+)diststyle all;
 """)
 
 time_table_create = ("""
 CREATE TABLE IF NOT EXISTS time (
-    start_time TIMESTAMP , 
-    hour SMALLINT, 
-    day SMALLINT, 
-    week SMALLINT, 
-    month SMALLINT, 
-    year SMALLINT, 
-    weekday SMALLINT
-);
+    start_time  TIMESTAMP  NOT NULL SORTKEY, 
+    hour        SMALLINT NOT NULL,  
+    day         SMALLINT NOT NULL, 
+    week        SMALLINT NOT NULL, 
+    month       SMALLINT NOT NULL, 
+    year        SMALLINT NOT NULL, 
+    weekday     SMALLINT NOT NULL
+)diststyle all;
 """)
 
 # STAGING TABLES
@@ -131,28 +131,76 @@ json 'auto ignorecase' region 'us-west-2';
 
 songplay_table_insert = ("""
 INSERT INTO songplays ( start_time, user_id, level, song_id, artist_id, session_id, location, user_agent) 
-VALUES( %s, %s, %s, %s, %s, %s, %s, %s)
+SELECT
+	timestamp 'epoch' + se.ts/1000 * interval '1 second' as start_time ,
+	se.userid ,
+	se."level",
+	ss.song_id ,
+	ss.artist_id, 
+	se.sessionid ,
+	se."location" ,
+	se.useragent
+FROM
+	staging_events se
+LEFT JOIN staging_songs ss 
+ON
+    se.artist = ss.artist_name
+	and se.song = ss.title
+WHERE se.page = 'NextSong'
 """)
 
 user_table_insert = ("""
 INSERT INTO users (user_id, first_name, last_name, gender, level) 
-VALUES(%s, %s, %s, %s, %s)
+select	
+	se.userid ,
+	se.firstname ,
+	se.lastname ,
+	se.gender ,
+	se."level" 
+from
+	staging_events se
+where se.userid is not null
 """)
 
 song_table_insert = ("""
 INSERT INTO songs (song_id, title, artist_id, year, duration) 
-VALUES(%s, %s, %s, %s, %s)
+select	
+	ss.song_id ,
+	ss.title ,
+	ss.artist_id ,
+	ss."year" ,
+	ss.duration 
+from
+	staging_songs ss 
+where ss.song_id is not null
 """)
 
 artist_table_insert = ("""
 INSERT INTO artists (artist_id, name, location, latitude, longitude) 
-VALUES(%s, %s, %s, %s, %s)
+select	
+	ss.artist_id ,
+	ss.artist_name ,
+	ss.artist_location ,
+	ss.artist_latitude ,
+	ss.artist_longitude 
+from
+	staging_songs ss 
+where ss.artist_id is not null
 """)
 
 
 time_table_insert = ("""
 INSERT INTO time (start_time, hour, day, week, month, year, weekday) 
-VALUES(%s, %s, %s, %s, %s, %s, %s)
+select	
+	timestamp 'epoch' + se.ts/1000 * interval '1 second' as start_time ,
+	extract(hour from start_time) as hour,
+	extract(day from start_time) as day,
+	extract(week from start_time) as week,
+	extract(month from start_time) as month ,
+	extract(year from start_time) as year,
+	extract(dayofweek from start_time) as weekday
+from
+	staging_events se
 """)
 
 # QUERY LISTS

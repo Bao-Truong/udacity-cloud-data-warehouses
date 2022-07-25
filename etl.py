@@ -64,7 +64,7 @@ def main():
 
     load_staging_tables(cur, conn)
     print("-"*60)
-    # insert_tables(cur, conn)
+    insert_tables(cur, conn)
     print("-"*60)
     conn.close()
 

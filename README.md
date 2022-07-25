@@ -23,4 +23,28 @@ In this project, you'll apply what you've learned on data warehouses and AWS to 
 - The log files in the dataset you'll be working with are partitioned by year and month.
 
 ## Install Requirements
+Tested on python 3.8
+
 `python -m pip install -r requirements.txt`
+
+## Structure
+
+The project includes files:
+
+`create_table.py` is where you'll create your fact and dimension tables for the star schema in Redshift.
+
+`etl.py` is where you'll load data from S3 into staging tables on Redshift and then process that data into your analytics tables on Redshift.
+
+`sql_queries.py` is where you'll define you SQL statements, which will be imported into the two other files above.
+
+`README.md` is where you'll provide discussion on your process and decisions for this ETL pipeline.
+
+`cryto.py` is simple script you can you to enscrypt/decrypt message. (can be use to encypt your db host, db name, db username, db password)
+
+## How to run
+- AWS Redshift DWH Resource, IAM roles resource MUST be created beforehand.
+- Input the `dwh.cfg` file with the Redshift Datawarehouse infos and your created IAM-role ARN.
+- Install the python requirements.py (check above 'Install Requirements' section).
+- Run the file create_tables.py `python create_tables.py` to create required tables.
+- Run the ETL file etl.py `python etl.py` to copy file from S3 to staging tables, then insert data into final tables.
+
