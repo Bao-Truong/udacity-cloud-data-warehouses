@@ -12,8 +12,8 @@ from cryptography.fernet import Fernet
 #########################################
 # Step2: Store the `key` print above somewhere, you need to use it again. (maybe SSM or Secret Manager on AWS, here i will use .env file)
 # Step3: Set the secretSEED environment with the value from the `key` (or inside .env file, exp: secretSEED=ABCDEawegwaeg_==)
-# Step4: You can use this python script to encrypt values and store it into the dwh.cfg (replace the msg in line 36 to the value you want to encrypt)
-# Step5: Use this script to encrypt all the sensitive data (such as DB Password, DB Username, DB HOST, DB Name)
+# Step4: You can use this python script to encrypt values and store it into the dwh.cfg (replace the msg variable in line 42 to the value you want to encrypt, exp: dwhuser)
+# Step5: Use this script to encrypt all the sensitive data (such as DB Password, DB Username, DB HOST, DB Name) and put it into the dwh.cfg
 # Step6: You may also store the `key` in the .env file, but dont commit that file to public (it is top secret.)
 
 #################
@@ -27,6 +27,8 @@ def get_seed():
     """
     load_dotenv()
     seed = os.getenv("secretSEED")
+    if(not seed):
+        raise Exception("Please read the IMPORTANT section included in the crypto.py file, basically you need the generate a key to use the fernet encryption algorithm(the key generation code is provided in cryto.py file). After that set the environment name `export secretSEED=key` you just generated (exp:  export secretSEED=waefweafwae1561==) ")
     seed = seed.encode()  # from string to bytes
     return seed
 
